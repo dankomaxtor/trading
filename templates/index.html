@@ -6,7 +6,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f0f8ff; /* Azul muy claro */
+            background-color: #f0f8ff;
             color: #333;
             margin: 0;
             padding: 20px;
@@ -20,10 +20,10 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
         h1, h2 {
-            color: #008080; /* Azul-verdoso (Teal) */
+            color: #008080;
         }
         form {
-            background-color: #e0ffff; /* Verde-azulado claro */
+            background-color: #e0ffff;
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 20px;
@@ -49,12 +49,47 @@
             border-radius: 8px;
         }
         .operacion-abierta {
-            background-color: #c8e6c9; /* Verde claro */
+            background-color: #e0ffff; /* Verde-azulado claro (Tu azul mar) */
+            border: 1px solid #008080;
+        }
+        .operacion-ganancia {
+            background-color: #c8e6c9; /* Verde para ganancia */
             border: 1px solid #4caf50;
         }
-        .operacion-cerrada {
-            background-color: #fce4ec; /* Rosa claro */
-            border: 1px solid #e91e63;
+        .operacion-perdida {
+            background-color: #ffcdd2; /* Rojo claro para pérdida */
+            border: 1px solid #f44336;
+        }
+        .acciones {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .acciones form, .acciones a {
+            margin: 0;
+        }
+        .acciones button {
+            padding: 5px 10px;
+        }
+        .delete-btn {
+            background-color: #e91e63;
+        }
+        .resumen {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #e6f7ff;
+            border-radius: 8px;
+            border: 1px solid #b3d9ff;
+        }
+        .rentabilidad-positiva {
+            color: #008000;
+            font-weight: bold;
+        }
+        .rentabilidad-negativa {
+            color: #ff0000;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -67,12 +102,14 @@
             <input type="date" id="fecha" name="fecha" required><br>
             <label for="activo">Activo:</label><br>
             <input type="text" id="activo" name="activo" required><br>
-            <label for="precio">Precio:</label><br>
+            <label for="precio">Precio de Entrada:</label><br>
             <input type="number" step="0.01" id="precio" name="precio" required><br>
             <label for="precio_objetivo">Precio Objetivo:</label><br>
             <input type="number" step="0.01" id="precio_objetivo" name="precio_objetivo" required><br>
             <label for="stop_loss">Stop Loss:</label><br>
             <input type="number" step="0.01" id="stop_loss" name="stop_loss" required><br>
+            <label for="importe_invertido">Importe Invertido:</label><br>
+            <input type="number" step="0.01" id="importe_invertido" name="importe_invertido" required><br>
             <label for="comentario_apertura">Comentario:</label><br>
             <input type="text" id="comentario_apertura" name="comentario_apertura"><br>
             <button type="submit">Abrir Operación</button>
@@ -80,27 +117,61 @@
 
         <h2>Historial de Operaciones</h2>
         {% for operacion in operaciones %}
-        <div class="operacion {% if operacion.estado == 'Cerrada' %}operacion-cerrada{% else %}operacion-abierta{% endif %}">
+        <div class="operacion {% if operacion.estado == 'Cerrada' %} {% if operacion.ganado_perdido >= 0 %}operacion-ganancia{% else %}operacion-perdida{% endif %} {% else %}operacion-abierta{% endif %}">
             <strong>Estado:</strong> {{ operacion.estado }}<br>
             <strong>Fecha:</strong> {{ operacion.fecha }}<br>
             <strong>Activo:</strong> {{ operacion.activo }}<br>
-            <strong>Precio:</strong> {{ operacion.precio }}<br>
+            <strong>Precio de Entrada:</strong> {{ operacion.precio }}<br>
             <strong>Objetivo:</strong> {{ operacion.precio_objetivo }} | <strong>SL:</strong> {{ operacion.stop_loss }}<br>
+            <strong>Importe Invertido:</strong> {{ operacion.importe_invertido }}<br>
             <strong>Comentario de apertura:</strong> {{ operacion.comentario_apertura }}
             
             {% if operacion.estado == 'Abierta' %}
-            <form method="POST" action="{{ url_for('cerrar_operacion', index=loop.index0) }}">
-                <label for="comentario_cierre">Comentario al cerrar:</label><br>
-                <input type="text" id="comentario_cierre" name="comentario_cierre"><br>
-                <button type="submit">Cerrar Operación</button>
-            </form>
+            <div class="acciones">
+                <form method="POST" action="{{ url_for('cerrar_operacion', index=loop.index0) }}">
+                    <label for="valor_cierre">Valor de cierre:</label>
+                    <input type="number" step="0.01" id="valor_cierre" name="valor_cierre" required>
+                    <label for="comentario_cierre">Comentario de cierre:</label>
+                    <input type="text" id="comentario_cierre" name="comentario_cierre">
+                    <button type="submit">Cerrar</button>
+                </form>
+                <a href="{{ url_for('editar_operacion', index=loop.index0) }}"><button>Editar</button></a>
+                <form method="POST" action="{{ url_for('borrar_operacion', index=loop.index0) }}" style="display:inline;">
+                    <button class="delete-btn" type="submit">Borrar</button>
+                </form>
+            </div>
             {% else %}
-            <br><strong>Comentario de cierre:</strong> {{ operacion.comentario_cierre }}
+            <br>
+            <strong>Valor de Cierre:</strong> {{ operacion.get('valor_cierre', 'N/A') }}<br>
+            <strong>Comentario de Cierre:</strong> {{ operacion.get('comentario_cierre', 'Sin comentario de cierre') }}<br>
+            <strong class="{% if operacion.ganado_perdido >= 0 %}rentabilidad-positiva{% else %}rentabilidad-negativa{% endif %}">
+                Resultado: {{ "%.2f"|format(operacion.ganado_perdido) }} € ({{ "%.2f"|format(operacion.rentabilidad) }}%)
+            </strong>
+            <div class="acciones">
+                <a href="{{ url_for('editar_operacion', index=loop.index0) }}"><button>Editar</button></a>
+                <form method="POST" action="{{ url_for('borrar_operacion', index=loop.index0) }}" style="display:inline;">
+                    <button class="delete-btn" type="submit">Borrar</button>
+                </form>
+            </div>
             {% endif %}
         </div>
         {% else %}
         <p>Aún no hay operaciones registradas.</p>
         {% endfor %}
+        
+        <div class="resumen">
+            <h2>Resumen de Inversiones</h2>
+            <p><strong>Dinero Ganado/Perdido Total:</strong> 
+                <span class="{% if resumen.total_ganado_perdido >= 0 %}rentabilidad-positiva{% else %}rentabilidad-negativa{% endif %}">
+                    {{ resumen.total_ganado_perdido }} €
+                </span>
+            </p>
+            <p><strong>Rentabilidad Total:</strong> 
+                <span class="{% if resumen.rentabilidad_total >= 0 %}rentabilidad-positiva{% else %}rentabilidad-negativa{% endif %}">
+                    {{ resumen.rentabilidad_total }} %
+                </span>
+            </p>
+        </div>
     </div>
 </body>
 </html>

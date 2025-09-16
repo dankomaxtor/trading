@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Operación</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #008080;
+        }
+        form {
+            background-color: #e0ffff;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        input[type="text"], input[type="number"], input[type="date"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #008080;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #008080;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Editar Operación</h1>
+        <form method="POST" action="{{ url_for('editar_operacion', index=index) }}">
+            <label for="fecha">Fecha:</label><br>
+            <input type="date" id="fecha" name="fecha" value="{{ operacion.fecha }}" required><br>
+            <label for="activo">Activo:</label><br>
+            <input type="text" id="activo" name="activo" value="{{ operacion.activo }}" required><br>
+            <label for="precio">Precio de Entrada:</label><br>
+            <input type="number" step="0.01" id="precio" name="precio" value="{{ operacion.precio }}" required><br>
+            <label for="precio_objetivo">Precio Objetivo:</label><br>
+            <input type="number" step="0.01" id="precio_objetivo" name="precio_objetivo" value="{{ operacion.precio_objetivo }}" required><br>
+            <label for="stop_loss">Stop Loss:</label><br>
+            <input type="number" step="0.01" id="stop_loss" name="stop_loss" value="{{ operacion.stop_loss }}" required><br>
+            <label for="importe_invertido">Importe Invertido:</label><br>
+            <input type="number" step="0.01" id="importe_invertido" name="importe_invertido" value="{{ operacion.importe_invertido }}" required><br>
+            <label for="comentario_apertura">Comentario de apertura:</label><br>
+            <input type="text" id="comentario_apertura" name="comentario_apertura" value="{{ operacion.comentario_apertura }}"><br>
+            {% if operacion.estado == 'Cerrada' %}
+            <label for="valor_cierre">Valor de Cierre:</label><br>
+            <input type="number" step="0.01" id="valor_cierre" name="valor_cierre" value="{{ operacion.valor_cierre }}" required><br>
+            <label for="comentario_cierre">Comentario de Cierre:</label><br>
+            <input type="text" id="comentario_cierre" name="comentario_cierre" value="{{ operacion.comentario_cierre }}"><br>
+            {% endif %}
+            <button type="submit">Guardar Cambios</button>
+            <a href="{{ url_for('index') }}"><button type="button">Cancelar</button></a>
+        </form>
+    </div>
+</body>
+</html>
