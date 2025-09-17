@@ -1,15 +1,7 @@
-import os
 from flask import Flask, render_template, request, redirect, url_for
 import json
 
 app = Flask(__name__)
-
-# Lee la clave de API de forma segura desde las variables de entorno
-api_key = os.environ.get('GEMINI_API_KEY')
-
-# Si la clave no está disponible, el programa puede fallar o mostrar un mensaje
-if not api_key:
-    print("Advertencia: No se encontró la variable de entorno 'GEMINI_API_KEY'.")
 
 ARCHIVO_OPERACIONES = 'operaciones.json'
 
@@ -136,6 +128,20 @@ def cerrar_operacion(index):
         operacion_a_cerrar["rentabilidad"] = round(rentabilidad, 2)
         
         guardar_operaciones(operaciones)
+    return redirect(url_for('index'))
+
+@app.route("/analisis_ia/<int:index>", methods=["GET"])
+def analisis_ia(index):
+    operaciones = cargar_operaciones()
+    if 0 <= index < len(operaciones):
+        # Aquí es donde iría el código para interactuar con la IA
+        # Por ahora, solo devolvemos una página para confirmar que funciona
+        operacion = operaciones[index]
+        return f"""
+        <h1>Análisis de Operación</h1>
+        <p>Esta es la operación: {operacion['activo']}.</p>
+        <p>Pronto añadiremos el análisis de IA aquí.</p>
+        """
     return redirect(url_for('index'))
 
 if __name__ == "__main__":
