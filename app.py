@@ -1,8 +1,15 @@
 from flask import Flask, render_template, request, redirect, url_for
 import json
+import google.generativeai as genai
 
 app = Flask(__name__)
 
+# Configuración de la API de IA
+API_KEY = "AIzaSyDJHhTTtSpLiF8dwLZeZDLYI464--DJZHM"
+genai.configure(api_key=API_KEY)
+model = genai.GenerativeModel('gemini-1.5-flash')
+
+# --- El resto del código que ya tienes ---
 ARCHIVO_OPERACIONES = 'operaciones.json'
 
 def cargar_operaciones():
@@ -70,11 +77,9 @@ def editar_operacion(index):
             operacion_a_editar["comentario_apertura"] = request.form["comentario_apertura"]
             operacion_a_editar["importe_invertido"] = float(request.form["importe_invertido"])
             
-            # También edita el comentario y valor de cierre si existen
             operacion_a_editar["comentario_cierre"] = request.form.get("comentario_cierre", operacion_a_editar.get("comentario_cierre", "Sin comentario de cierre"))
             operacion_a_editar["valor_cierre"] = float(request.form.get("valor_cierre", operacion_a_editar.get("valor_cierre", operacion_a_editar["precio"])))
 
-            # Recalcula si la operación estaba cerrada
             if operacion_a_editar.get("estado") == "Cerrada":
                 valor_cierre = operacion_a_editar.get("valor_cierre", operacion_a_editar["precio"])
                 precio_entrada = operacion_a_editar["precio"]
@@ -116,7 +121,6 @@ def cerrar_operacion(index):
         operacion_a_cerrar["comentario_cierre"] = comentario_cierre
         operacion_a_cerrar["valor_cierre"] = valor_cierre
         
-        # Realiza los cálculos con el importe invertido
         precio_entrada = operacion_a_cerrar.get("precio", 0)
         importe_invertido = operacion_a_cerrar.get("importe_invertido", 0)
         
@@ -133,5 +137,35 @@ def cerrar_operacion(index):
         guardar_operaciones(operaciones)
     return redirect(url_for('index'))
 
+# --- NUEVA RUTA DE IA ---
+@app.route("/analisis_ia/<int:index>")
+def analisis_ia(index):
+    operaciones = cargar_operaciones()
+    if 0 <= index < len(operaciones):
+        operacion = operaciones[index]
+        
+        # Crea el prompt para la IA con los nuevos campos
+        prompt = (f"Como especialista en trading, proporciona un resumen breve y útil del resultado de la operación. "
+                  f"Los datos son: "
+                  f"Activo: {operacion['activo']}. "
+                  f"Precio de Compra: {operacion['precio']}€. "
+                  f"Precio Objetivo: {operacion['precio_objetivo']}€. "
+                  f"Stop Loss: {operacion['stop_loss']}€. "
+                  f"Importe invertido: {operacion['importe_invertido']}€. "
+                  f"Resultado: {operacion.get('ganado_perdido', 0)}€. "
+                  f"Rentabilidad: {operacion.get('rentabilidad', 0)}%. "
+                  f"Además, haz una valoración profesional sobre el ratio riesgo-beneficio del stop loss y del precio objetivo. "
+                  f"Finalmente, sugiere algunas preguntas para que se pueda autoevaluar la operación en términos profesionales de trading.")
+
+        try:
+            response = model.generate_content(prompt)
+            analisis = response.text
+        except Exception as e:
+            analisis = f"Error al generar el análisis: {str(e)}"
+
+        return render_template("analisis_ia.html", analisis=analisis)
+    return redirect(url_for('index'))
+
+# --- El resto del código que ya tienes ---
 if __name__ == "__main__":
     app.run(debug=True)

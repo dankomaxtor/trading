@@ -152,6 +152,7 @@
                 <form method="POST" action="{{ url_for('borrar_operacion', index=loop.index0) }}" style="display:inline;">
                     <button class="delete-btn" type="submit">Borrar</button>
                 </form>
+                <a href="{{ url_for('analisis_ia', index=loop.index0) }}"><button>Análisis IA</button></a>
             </div>
             {% endif %}
         </div>

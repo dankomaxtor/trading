@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Análisis IA</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #008080;
+        }
+        .analisis-box {
+            background-color: #e6f7ff;
+            padding: 20px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+        }
+        .acciones {
+            margin-top: 20px;
+        }
+        .acciones button {
+            background-color: #008080;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Análisis de la Operación</h1>
+        <div class="analisis-box">
+            <p>{{ analisis }}</p>
+        </div>
+        <div class="acciones">
+            <a href="{{ url_for('index') }}"><button>Volver al registro</button></a>
+        </div>
+    </div>
+</body>
+</html>
