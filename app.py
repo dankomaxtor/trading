@@ -1,15 +1,16 @@
+import os
 from flask import Flask, render_template, request, redirect, url_for
 import json
-import google.generativeai as genai
 
 app = Flask(__name__)
 
-# Configuración de la API de IA
-API_KEY = "AIzaSyDJHhTTtSpLiF8dwLZeZDLYI464--DJZHM"
-genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
+# Lee la clave de API de forma segura desde las variables de entorno
+api_key = os.environ.get('GEMINI_API_KEY')
 
-# --- El resto del código que ya tienes ---
+# Si la clave no está disponible, el programa puede fallar o mostrar un mensaje
+if not api_key:
+    print("Advertencia: No se encontró la variable de entorno 'GEMINI_API_KEY'.")
+
 ARCHIVO_OPERACIONES = 'operaciones.json'
 
 def cargar_operaciones():
@@ -137,35 +138,5 @@ def cerrar_operacion(index):
         guardar_operaciones(operaciones)
     return redirect(url_for('index'))
 
-# --- NUEVA RUTA DE IA ---
-@app.route("/analisis_ia/<int:index>")
-def analisis_ia(index):
-    operaciones = cargar_operaciones()
-    if 0 <= index < len(operaciones):
-        operacion = operaciones[index]
-        
-        # Crea el prompt para la IA con los nuevos campos
-        prompt = (f"Como especialista en trading, proporciona un resumen breve y útil del resultado de la operación. "
-                  f"Los datos son: "
-                  f"Activo: {operacion['activo']}. "
-                  f"Precio de Compra: {operacion['precio']}€. "
-                  f"Precio Objetivo: {operacion['precio_objetivo']}€. "
-                  f"Stop Loss: {operacion['stop_loss']}€. "
-                  f"Importe invertido: {operacion['importe_invertido']}€. "
-                  f"Resultado: {operacion.get('ganado_perdido', 0)}€. "
-                  f"Rentabilidad: {operacion.get('rentabilidad', 0)}%. "
-                  f"Además, haz una valoración profesional sobre el ratio riesgo-beneficio del stop loss y del precio objetivo. "
-                  f"Finalmente, sugiere algunas preguntas para que se pueda autoevaluar la operación en términos profesionales de trading.")
-
-        try:
-            response = model.generate_content(prompt)
-            analisis = response.text
-        except Exception as e:
-            analisis = f"Error al generar el análisis: {str(e)}"
-
-        return render_template("analisis_ia.html", analisis=analisis)
-    return redirect(url_for('index'))
-
-# --- El resto del código que ya tienes ---
 if __name__ == "__main__":
     app.run(debug=True)
